@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root {
+  --quiz-deep: #4426c6;
+  --quiz-vivid: #7c31ea;
+  --quiz-white: #ffffff;
+  --quiz-lavender: #d2aef6;
+  --quiz-muted: #784ac6;
+  --quiz-navy: #0f357b;
+  --quiz-accent: #9028ed;
+  --quiz-black: #000000;
+  --background: var(--quiz-navy);
+  --foreground: var(--quiz-white);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-quiz-deep: var(--quiz-deep);
+  --color-quiz-vivid: var(--quiz-vivid);
+  --color-quiz-white: var(--quiz-white);
+  --color-quiz-lavender: var(--quiz-lavender);
+  --color-quiz-muted: var(--quiz-muted);
+  --color-quiz-navy: var(--quiz-navy);
+  --color-quiz-accent: var(--quiz-accent);
+  --color-quiz-black: var(--quiz-black);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
