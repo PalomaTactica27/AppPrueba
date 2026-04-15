@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useId, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import type { Product } from "@/types/product";
+import { supabase } from "@/lib/supabase/client";
 
 const PRICE_STEP = 0.01;
-
-function createId(): string {
-  return crypto.randomUUID();
-}
 
 function roundMoney(n: number): number {
   return Math.round(n * 100) / 100;
@@ -40,9 +37,40 @@ export function ProductManager() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [priceStr, setPriceStr] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      setErrorMsg("");
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, description, price")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setErrorMsg("No se pudieron cargar los productos.");
+        setLoading(false);
+        return;
+      }
+
+      const normalized: Product[] = (data ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description ?? "",
+        price: Number(p.price),
+      }));
+      setProducts(normalized);
+      setLoading(false);
+    };
+
+    void loadProducts();
+  }, []);
 
   const addProduct = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
+    async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       const trimmedName = name.trim();
       const trimmedDesc = description.trim();
@@ -52,15 +80,30 @@ export function ProductManager() {
         return;
       }
 
-      setProducts((prev) => [
-        ...prev,
-        {
-          id: createId(),
+      setErrorMsg("");
+
+      const { data, error } = await supabase
+        .from("products")
+        .insert({
           name: trimmedName,
           description: trimmedDesc,
           price: roundMoney(price),
-        },
-      ]);
+        })
+        .select("id, name, description, price")
+        .single();
+
+      if (error || !data) {
+        setErrorMsg("No se pudo guardar el producto.");
+        return;
+      }
+
+      const inserted: Product = {
+        id: data.id,
+        name: data.name,
+        description: data.description ?? "",
+        price: Number(data.price),
+      };
+      setProducts((prev) => [inserted, ...prev]);
       setName("");
       setDescription("");
       setPriceStr("");
@@ -207,7 +250,13 @@ export function ProductManager() {
           </p>
         </div>
 
-        {count === 0 ? (
+        {errorMsg ? <p className="mb-3 text-sm text-red-200">{errorMsg}</p> : null}
+
+        {loading ? (
+          <p className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-[#7C31EA]/50 bg-[#0F357B]/30 px-4 py-12 text-center text-[#D2AEF6]">
+            Cargando productos...
+          </p>
+        ) : count === 0 ? (
           <p className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-[#7C31EA]/50 bg-[#0F357B]/30 px-4 py-12 text-center text-[#D2AEF6]">
             Aún no hay productos. Completa el formulario y pulsa &quot;Agregar producto&quot;.
           </p>
